@@ -54,14 +54,17 @@ insert_minor <- function(major_labs, n_minor,blanks) {labs <-
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("DATA.RData")
 head(data)
+names(data)
 world <- map_data("world")
 index <- which(world$long > 178 & world$long < 190.3)
 clean.world <- world[-index, ]
-data<-data[-which(data$Study %in% c("ELA","TROUT","SWAT")),]
+#data<-data[-which(data$Study %in% c("ELA","TROUT","SWAT")),]
 data$Study<-factor(data$Study)
 data$DeepShallow <- factor(data$DEPTH > 100, labels=c('<=100m', '>100m'))
+data$DeepShallowColor <- factor(data$DEPTH > 100, labels=c("chartreuse3", "blue"))
 #summary(data$DeepShallow)
 #<=100m    >100m
 #2758      2750
@@ -78,15 +81,6 @@ worldmap<-worldmap +
         panel.grid.minor = element_blank(),
         panel.background = element_blank())               
 
-for (i in seq(1:nrow(data))){
-  if (data$DEPTH[i] <= 100){
-    data$DeepShallowColor[i] = "chartreuse3"
-  }
-  else {
-    data$DeepShallowColor[i] = "blue"
-  }
-}
-
 points<-as.data.frame(table(data$Study))
 names(points) <- c("Study", "Freq")
 points$logfreq<-ifelse(log10(points$Freq)>0, log10(points$Freq), points$logfreq<-0)
@@ -96,30 +90,6 @@ total1<-total[which(total$Freq > 0),]
 #kable(total1[,1:2])
 data<-merge(data,points,by="Study")
 
-longs<-c()
-lats<-c()
-samples<-c()
-points1<-as.matrix(table(data$long,data$lat))
-for (long in seq(1,nrow(points1))){
-  for (lat in seq(1,ncol(points1))){
-    if (points1[long,lat] >0){
-      #points[2,29]
-      longs<-c(longs,rownames(points1)[long])
-      lats<-c(lats,colnames(points1)[lat])
-      samples<-c(samples,points1[long,lat])
-    }
-  }
-}
-
-counts<-as.data.frame(cbind(longs,lats,samples,log10(samples)+1))
-
-names(counts) <- c("long", "lat","samples","log10samplesplusone")
-data<-merge(data,counts,by=c("long","lat"))
-
-
-
-
-data$DeepShallowsize<-ifelse(data$DeepShallow == '>100m',2,4)
 deep_layer <- data[data$DeepShallow == '>100m',]
 shallow_layer <- data[data$DeepShallow == '<=100m',]
 
@@ -176,6 +146,7 @@ Bacterial abundance vs. viral abundance colored by depth category. Each point re
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DATA.RData")
 data$log10VIRUS<-log10(data$VIRUS)
 data$log10BACTERIA<-log10(data$BACTERIA)
@@ -183,6 +154,7 @@ data$Log10_VirBac_Ratio <- log10(data$VIRUS/data$BACTERIA)
 #nrow(data)
 # 5,508
 small <- data[which(!is.na(data$BACTERIA) & !is.na(data$VIRUS)), ]
+nrow(small)
 small$DepthCategory[small$DEPTH <= 100] <- "<=100m"
 small$DepthCategory[small$DEPTH >  100] <- ">100m"
 small$color<-ifelse(small$DepthCategory == "<=100m","chartreuse3","blue")
@@ -238,6 +210,7 @@ save(small, file = "output/data/SMALL.RData")
 Histograms of the ratio of viral abundance to Microbial abundance and the log of the ratio of viral abundance to Microbial abundance. The histograms of ratio of viral abundance to Microbial abundance is shown for depth categories. The distribution at the top of the panel represents samples taken at depths of 100 meters or less; samples taken at depths of greater than 100 meters are shown in the bottom panel. The red arrow at the top shows the position of the median value. The blue arrows shows the range of value between which 95 percent of the data is found. The domain of ratio values shown include 99\% of all of the ratio data points.
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALL.RData")
 nrow(small)
 
@@ -305,6 +278,7 @@ dev.off()
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALL.RData")
 
 all<-quantile(small$VIRUS/small$BACTERIA,probs=c(.025,.5,.975))
@@ -373,6 +347,7 @@ dev.off()
 The log (base 10) of microbe abundance versus the log (base 10) of viral abunndance. Each point represents a biological sample. The black line is a 1:1 line while the red line represents the regression line fit by minimizing the sum of squares for the equation Y = $\alpha$X + $\beta$. Here $\alpha$ is 0.422 and $\beta$ is 4.451.
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALL.RData")
 index <- which( small$DepthCategory == "<=100m")
 smallLabSet<-small[index, ]
@@ -440,6 +415,7 @@ save(smallLabSet, file = "output/data/SMALLLABSET.RData")
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALL.RData")
 index <- which( small$DepthCategory == ">100m")
 DeepSmall<-small[index, ]
@@ -506,6 +482,7 @@ save(DeepSmall, file = "output/data/DEEPSMALL.RData")
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 load("output/data/SMALL.RData")
 load("output/data/DEEPSMALL.RData")
@@ -577,6 +554,7 @@ dev.off()
 Where the R-squared of the 10:1 model was calculated with log transformed data with an intercept of one and a coefficient of one, the r-squared values of a set of similar models were calculated to understand how varying the intercept by very small amounts relates to the r-squared of the model
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 m1<-lm(smallLabSet$log10VIRUS ~ smallLabSet$log10BACTERIA)
 ms <- summary(m1)
@@ -626,6 +604,7 @@ dev.off()
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DEEPSMALL.RData")
 m1<-lm(DeepSmall$log10VIRUS ~ DeepSmall$log10BACTERIA)
 ms <- summary(m1)
@@ -676,6 +655,7 @@ dev.off()
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 load("output/data/SMALL.RData")
 load("output/data/DEEPSMALL.RData")
@@ -746,6 +726,7 @@ dev.off()
 
 Table of the number of samples taken by study.
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 load("output/data/DEEPSMALL.RData")
 shallowpoints<-as.data.frame(table(smallLabSet$Study))
@@ -760,6 +741,7 @@ kable(allpoints[,1:4])
 
 Table of percentiles for ensemble of slopes generated by bootstrapping the simple linear regression model
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData") 
 require(lme4)
 reps<-100
@@ -902,6 +884,7 @@ deeppercentiles2<-percentiles2
 
 Create a scatterplot of all data with the study-specific scatterplots following
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")  
 ARCTICSBI<-smallLabSet[which(smallLabSet$Study == 'ARCTICSBI'),]
 FECYCLE2<-smallLabSet[which(smallLabSet$Study == 'FECYCLE2'),]
@@ -956,6 +939,7 @@ save(NASB2005, file = "output/data/NASB2005.RData")
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/ARCTICSBI.RData")
 load("output/data/FECYCLE2.RData")
 load("output/data/STRATAPHYT1.RData")
@@ -1234,6 +1218,7 @@ dev.off()
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DEEPSMALL.RData")
 m1<-lm(DeepSmall$log10VIRUS ~ DeepSmall$log10BACTERIA)
 graphSmall<-function(dataset){
@@ -1465,6 +1450,7 @@ dev.off()
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 load("output/data/SLOPES2.RData")
 load("output/data/TOTAL1.RData")
@@ -1602,8 +1588,10 @@ save(rsqfits, file='output/data/SHALLOWRSQFITS.RData')
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DEEPSMALL.RData")
 load("output/data/DEEPSLOPES2.RData")
+load("output/data/TOTAL1.RData")
 fm2<-lme(log10VIRUS~log10BACTERIA, random=~1+log10BACTERIA|Study,data=DeepSmall)
 slopes<-as.data.frame(cbind(study=levels(factor(DeepSmall$Study)),slope=as.vector(coef(fm2)[,2])))
 slopes$study <- factor(slopes$study, levels = slopes$study[order(slopes$slope)])
@@ -1684,33 +1672,36 @@ p<-ggplot(x1, aes(x=Study, y=slopes)) +
                     labels = c(insert_minor(seq(-.25,1.5,by=.25),0,0)), 
                     limits = c(0,1.5), 
                     expand = c(0,0))
+p
 
 hist_right <- ggplot()+
- #geom_histogram(aes(DeepSmall1$Study,fill=DeepSmall1$containsOneColor)) +
- geom_histogram(aes(DeepSmall1$Study,fill=DeepSmall1$containsOneColor)) +
- scale_fill_manual(name="One in CI?", values = c("black","blue"), labels=c('No','Yes')) +
- coord_flip() +
- labs(list(y='Frequency')) + 
- theme(title = element_text(size=20),
-       axis.text.x=element_text(size=10, colour="black"),
-       axis.title=element_text(size=16,face="bold"),
-       axis.title.y=element_blank(),
-       axis.text.y = element_blank(),
-       panel.background = element_blank(), 
-       axis.line = element_line(colour = "black"),
-       axis.line.y = element_blank(),
-       axis.ticks.y = element_blank(),
-       panel.grid.major = element_blank(),
-       panel.grid.minor = element_blank(),
-       legend.key = element_rect(fill = "white"),
-       legend.title = element_text(size = 12),
-       legend.text = element_text(size = 8),
-       legend.key.height = unit(.2,"line"),
-       legend.position = c(.4,.1)) + 
-scale_y_reverse()
+  #geom_histogram(aes(smallLabSet1$Study,fill=smallLabSet1$color)) +
+  stat_count(aes(DeepSmall1$Study,fill=DeepSmall1$color),show.legend = F) +
+  scale_fill_manual(name="One in CI?", values = c("black","blue"), labels=c('No','Yes')) +
+  coord_flip() +
+  labs(list(y='Frequency')) + 
+  theme(title = element_text(size=20),
+        axis.text.x=element_text(size=10, colour="black"),
+        axis.title=element_text(size=16,face="bold"),
+        axis.title.y=element_blank(),
+        axis.text.y = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(fill = "white"),
+        legend.title = element_text(size = 0),
+        legend.text = element_text(size = 0),
+        legend.key.height = unit(0,"line"),
+        legend.position = c(.4,.1)) + 
+  scale_y_reverse()
+hist_right
+
 
 WIDTH<-5
-HEIGHT<-7
+HEIGHT<-5
 vp1 <- viewport(width = 8/10, height = 12/12, x = 4/10, y = 6/12)
 vp2 <- viewport(width = 2/10, height = 12/12, x = 8.75/10, y = 6/12)
 grid.newpage()
@@ -1733,6 +1724,7 @@ save(deeprsqfits, file='output/data/DEEPRSQFITS.RData')
 
 Constrained regression model where the intercept for each lab was permitted to be between one standard deviation above or below the standard error of the intercept from the simple linear regression model. Here SE(intercept) = 0.10995505, estimate(intercept) = 4.4427386, and estimate(slope) = 0.4301043. R-squared for this model is 0.3486318.
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 z4<-ifelse(smallLabSet$Study == "ARCTICSBI",1,0)
 z24<-ifelse(smallLabSet$Study == "BATS",1,0)
@@ -1845,6 +1837,7 @@ save(shallowvariableInterceptwithconstraints, file = "output/data/SHALLOWCONSTRA
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DEEPSMALL.RData")
 STRATAPHYT1<-DeepSmall[which(DeepSmall$Study == 'STRATIPHYT1'),]
 STRATAPHYT2<-DeepSmall[which(DeepSmall$Study == 'STRATIPHYT2'),]
@@ -1946,6 +1939,7 @@ save(deepvariableInterceptwithconstraints, file = "output/data/DEEPCONSTRAINTS.R
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
 #figure22_1-1
 require(grid)
+source("plotting_functions.R")
 load("output/data/SMALL.RData")
 smallLabSet<-small[which(small$DepthCategory == "<=100m"),]
 DeepSmall<-small[which(small$DepthCategory == ">100m"),]
@@ -2034,6 +2028,7 @@ dev.off()
 
 Comparison of AIC and BIC of each of the linear models applied to viral abundance data
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 shallowVariableInterceptWithConstraints <- readRDS("output/data/SHALLOWVARIABLEINTERCEPTWITHCONSTRAINTS.rds")
 deepVariableInterceptWithConstraints <- readRDS("output/data/DEEPVARIABLEINTERCEPTWITHCONSTRAINTS.rds")
@@ -2042,12 +2037,6 @@ AICc <- function(col1,col2){
   N<-length(col1)
   SSE<-sum(log(col1/col2)^2)
   return(N*log(SSE/N))
-}
-
-calcRSQ <- function(obs,pred){
-  ssTotal <- sum((obs-mean(obs))^2)
-  ssResidual <- sum((obs - pred)^2)
-  return(1-(ssResidual/ssTotal))
 }
 
 m1<-lm(log10VIRUS~log10BACTERIA,data=smallLabSet)
@@ -2101,6 +2090,7 @@ kable(totalAIC[c(1,3,2,4),])
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
 #figure31
+source("plotting_functions.R")
 load("output/data/SMALLLABSET.RData")
 load("output/data/DEEPSMALL.RData")
 fm2<-lme(log10VIRUS~log10BACTERIA, random=~1+log10BACTERIA|Study,data=smallLabSet)
@@ -2128,6 +2118,7 @@ kable(totalcv1)
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DEEPCONSTRAINTS.RData")
 load("output/data/SHALLOWCONSTRAINTS.RData")
 
@@ -2148,6 +2139,7 @@ kable(totalcv1)
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load('output/data/SHALLOWRSQFITS.RData')
 load('output/data/DEEPRSQFITS.RData')
 
@@ -2163,6 +2155,7 @@ kable(totalrsqs1)
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/SHALLOWPERCENTILES2.RData")
 load("output/data/DEEPPERCENTILES2.RData")
 #percentiles2
@@ -2172,6 +2165,7 @@ kable(ninetfyfivepercent)
 ```
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
+source("plotting_functions.R")
 load("output/data/DEEPCONSTRAINTS.RData")
 load("output/data/SHALLOWCONSTRAINTS.RData")
 load("output/data/SMALLLABSET.RData")
@@ -2203,6 +2197,7 @@ xtable(s1)
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
 #identify inliers
 #table(small$DepthCategory)
+source("plotting_functions.R")
 load("output/data/SMALL.RData")
 load("output/data/SMALLLABSET.RData")
 load("output/data/DEEPSMALL.RData")
@@ -2288,7 +2283,7 @@ kable(ann4)
 
 
 ```{r, echo = FALSE, warning=F, results='hold', message=FALSE}
-
+source("plotting_functions.R")
 load("output/data/DATA.RData")
 # plot(sort(data$DEPTH))
 # plot(ecdf(data$DEPTH))
