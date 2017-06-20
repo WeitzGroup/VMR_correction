@@ -39,17 +39,9 @@ require(grid)
 # data = read.csv("VirMic_data.csv")
 # save(data, file = "output/data/DATA.RData")
 
-calcRSQ <- function(obs,pred){
-  ssTotal <- sum((obs-mean(obs))^2)
-  ssResidual <- sum((obs - pred)^2)
-  return(1-(ssResidual/ssTotal))
-}
-
-insert_minor <- function(major_labs, n_minor,blanks) {labs <- 
-                              c( sapply( major_labs, function(x) c(x, rep("", blanks) ) ) )
-                              labs[1:(length(labs)-n_minor)]}
 #load("output/data/DATA.RData")
 #write.table(data, file = "VirMic_data.csv", append = FALSE, sep = " ", row.names = F, col.names = TRUE, qmethod = c("escape", "double"))
+source("plotting_functions.R")
 
 ```
 
@@ -351,6 +343,7 @@ source("plotting_functions.R")
 load("output/data/SMALL.RData")
 index <- which( small$DepthCategory == "<=100m")
 smallLabSet<-small[index, ]
+nrow(smallLabSet)
 m1<-lm(smallLabSet$log10VIRUS ~ smallLabSet$log10BACTERIA)
 ms <- summary(m1)
 RSQ10BacModel<-list(r2 = format(1-(sum((smallLabSet$log10VIRUS-(1+(1*smallLabSet$log10BACTERIA)))^2)/                                     sum((smallLabSet$log10VIRUS-mean(smallLabSet$log10VIRUS))^2)),digits = 3))
@@ -419,6 +412,7 @@ source("plotting_functions.R")
 load("output/data/SMALL.RData")
 index <- which( small$DepthCategory == ">100m")
 DeepSmall<-small[index, ]
+nrow(DeepSmall)
 m1<-lm(DeepSmall$log10VIRUS ~ DeepSmall$log10BACTERIA)
 ms <- summary(m1)
 RSQ10BacModel<-list(r2 = format(1-(sum((DeepSmall$log10VIRUS-(1+(1*DeepSmall$log10BACTERIA)))^2)/
@@ -1244,9 +1238,7 @@ graphSmall<-function(dataset){
       expand = c(0,0)) +
     scale_y_continuous(#breaks = c(seq(5.5,9,by=.25)),
       limits = c(min(DeepSmall$log10VIRUS)-.1,max(DeepSmall$log10VIRUS)+.1),
-      expand = c(0,0))+
-  theme(axis.line.x = element_line(color="black", size = 1),
-        axis.line.y = element_line(color="black", size = 1))
+      expand = c(0,0))
   return(OBJ)
 }
 
@@ -1368,7 +1360,6 @@ fig21a.1 <- ggplot(DeepSmall, aes(x=log10BACTERIA, y=log10VIRUS)) +
         title = element_text(size=9),
         axis.text=element_text(size=7),
         axis.title=element_text(size=7,face="bold"),
-        aspect.ratio=1,
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
